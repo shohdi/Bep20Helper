@@ -9,7 +9,7 @@
 
 1. Clone this repo (or just grab the `.cs` file, we’re not judging):
    ```bash
-   git clone https://github.com/yourname/tra.osi
+   git clone https://github.com/shohdi/Bep20Helper.git
    ```
 2. Open your C# project in Visual Studio or Rider.  
 3. Add references to:
