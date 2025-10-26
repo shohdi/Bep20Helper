@@ -45,10 +45,10 @@ namespace tra.osi
         Task<string> WbnbToBnb(string privateKey, decimal Amount);
         Task<string> BnbToWbnb(string privateKey, decimal Amount);
 
-        Task<string> Transfer(string privateKey,string recipient, decimal amount,string tokenAddress = "");
+        Task<string> Transfer(string privateKey, string recipient, decimal amount, string tokenAddress = "");
 
 
-	}
+    }
     public class BlockchainHelper : IBlockchainHelper
     {
 
@@ -65,7 +65,7 @@ namespace tra.osi
 
 
         private int SlippageBps = 50;
-        private  int DeadlineSeconds = 300;
+        private int DeadlineSeconds = 300;
 
         private readonly string _rpc;
 
@@ -73,12 +73,12 @@ namespace tra.osi
         private readonly string _Router = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
         private readonly string _USDT = "0x55d398326f99059fF775485246999027B3197955";
         private readonly string _WBNB = "0xbb4Cdb9CBd36B01bD1cBaEBF2De08d9173bc095c";
-       
-        private  BigInteger MaxUint = BigInteger.Parse("115792089237316195423570985008687907853269984665640564039457584007913129639935");
+
+        private BigInteger MaxUint = BigInteger.Parse("115792089237316195423570985008687907853269984665640564039457584007913129639935");
         public BlockchainHelper(string pRpc = "https://bsc-dataseed.binance.org")
         {
             _rpc = pRpc;
-            
+
         }
 
 
@@ -111,12 +111,12 @@ namespace tra.osi
             return (await func.CallAsync<List<BigInteger>>(amountIn, path)).ToArray();
         }
 
-        
+
 
         public async Task<decimal> GetPrice(string pTokenAddr = "")
         {
-            
-            if(string.IsNullOrWhiteSpace(pTokenAddr) || pTokenAddr == _WBNB)
+
+            if (string.IsNullOrWhiteSpace(pTokenAddr) || pTokenAddr == _WBNB)
             {
                 pTokenAddr = _WBNB;
                 decimal usdt = 1;
@@ -130,9 +130,9 @@ namespace tra.osi
             }
             else
             {
-                
+
                 var bnbPrice = await GetPrice();
-                decimal wbnb = 1/bnbPrice;
+                decimal wbnb = 1 / bnbPrice;
                 var _WBNBDecimals = await this._GetDecimalsAsync(_WBNB);
                 var wbnbAmount = Web3.Convert.ToWei(wbnb, _WBNBDecimals);
                 var tokenAmount = await this.GetAmountsOutAsync(_WBNB, pTokenAddr, wbnbAmount);
@@ -141,9 +141,9 @@ namespace tra.osi
                 token = 1 / token;
                 return token;
             }
-            
-            
-            
+
+
+
         }
 
         public async Task<decimal> GetBalance(string pWalletAddress, string pTokenAddr = "")
@@ -155,7 +155,7 @@ namespace tra.osi
                 var testWallet = this.CreateNewWallet();
                 var account = new Account(testWallet.PrivateKeyHex);
 
-                var web3 = new Web3(account, this._rpc); 
+                var web3 = new Web3(account, this._rpc);
                 web3.TransactionManager.UseLegacyAsDefault = true;
 
                 if (string.IsNullOrWhiteSpace(pTokenAddr))
@@ -166,7 +166,7 @@ namespace tra.osi
                 }
                 else
                 {
-                    
+
                     var balanceOfFunctionMessage = new BalanceOfFunction()
                     {
                         Owner = pWalletAddress,
@@ -185,13 +185,13 @@ namespace tra.osi
         }
 
 
-        
+
 
         /// <summary>
-		/// Creates a brand new wallet (BIP39/44) and returns mnemonic, private key, and BSC address.
-		/// IMPORTANT: You are responsible for storing the mnemonic/private key securely.
-		/// </summary>
-		public WalletResult CreateNewWallet(int wordCount = 12)
+        /// Creates a brand new wallet (BIP39/44) and returns mnemonic, private key, and BSC address.
+        /// IMPORTANT: You are responsible for storing the mnemonic/private key securely.
+        /// </summary>
+        public WalletResult CreateNewWallet(int wordCount = 12)
         {
             // Generate a new mnemonic and derive the first account using the standard ETH/BSC path
             // BSC uses Ethereum keys/addresses: m/44'/60'/0'/0/0
@@ -237,7 +237,7 @@ namespace tra.osi
         }
 
 
-        private  async Task<BigInteger> GetMinOutAsync(
+        private async Task<BigInteger> GetMinOutAsync(
        string tokenIn, string tokenOut,
        decimal amountInDecimal,
        int tokenInDecimals, int tokenOutDecimals,
@@ -261,7 +261,7 @@ namespace tra.osi
             var web3 = new Web3(account, this._rpc);
             web3.TransactionManager.UseLegacyAsDefault = true;
             var wbnbDec = await this._GetDecimalsAsync(_WBNB);
-            
+
             var amountIn = Web3.Convert.ToWei(Amount, wbnbDec);
             var wbnb = web3.Eth.GetContract(_WbnbAbi, _WBNB);
             var withdrawFunc = wbnb.GetFunction("withdraw");
@@ -275,7 +275,7 @@ namespace tra.osi
 
 
             var gasPrice = await web3.Eth.GasPrice.SendRequestAsync();
-            var txHash = await withdrawFunc.SendTransactionAsync(account.Address, gas: gasEstimate,gasPrice:gasPrice, value: null, functionInput: amountIn);
+            var txHash = await withdrawFunc.SendTransactionAsync(account.Address, gas: gasEstimate, gasPrice: gasPrice, value: null, functionInput: amountIn);
             return txHash;
         }
 
@@ -295,7 +295,7 @@ namespace tra.osi
             var gasEstimate = await depositFunc.EstimateGasAsync(
                 from: account.Address,
                 null,
-                value:new HexBigInteger(amountIn)
+                value: new HexBigInteger(amountIn)
             );
 
 
@@ -326,7 +326,7 @@ namespace tra.osi
                 from: account.Address,
                 null,
                 value: null,
-                functionInput:  new object[] {
+                functionInput: new object[] {
                 amountIn,
                 amountOutMin,
                 path,
@@ -351,6 +351,10 @@ namespace tra.osi
                 });
 
             Console.WriteLine($"Swap tx mined: {receipt.TransactionHash} | Status: {receipt.Status}");
+            if(receipt.Status.Value != 1)
+            {
+                throw new Exception($"Transaction {receipt.TransactionHash} fail status : {receipt.Status}");
+            }
             return receipt.TransactionHash;
         }
 
@@ -369,75 +373,84 @@ namespace tra.osi
             Console.WriteLine($"Approve tx: {approveReceipt.TransactionHash} | Status: {approveReceipt.Status}");
         }
 
-		public async Task<string> Transfer(string privateKey, string recipient, decimal amount, string tokenAddress = "")
-		{
-			var account = new  Account(privateKey);
+        public async Task<string> Transfer(string privateKey, string recipient, decimal amount, string tokenAddress = "")
+        {
+            var account = new Account(privateKey);
 
-			var web3 = new Web3(account, this._rpc);
-			web3.TransactionManager.UseLegacyAsDefault = true;
+            var web3 = new Web3(account, this._rpc);
+            web3.TransactionManager.UseLegacyAsDefault = true;
             int decimalsVlaue = 18;
-            if(!string.IsNullOrWhiteSpace(tokenAddress))
-				decimalsVlaue = await this._GetDecimalsAsync(tokenAddress);
+            if (!string.IsNullOrWhiteSpace(tokenAddress))
+                decimalsVlaue = await this._GetDecimalsAsync(tokenAddress);
             else
-				decimalsVlaue = await this._GetDecimalsAsync(_WBNB);
-			
-			var amountIn = Web3.Convert.ToWei(amount, decimalsVlaue);
+                decimalsVlaue = await this._GetDecimalsAsync(_WBNB);
 
-			if (!string.IsNullOrWhiteSpace(tokenAddress))
+            var amountIn = Web3.Convert.ToWei(amount, decimalsVlaue);
+
+            if (!string.IsNullOrWhiteSpace(tokenAddress))
             {
-				//transfer token
-				
-				
-				// Create a transfer function message
-				var transfer = new TransferFunction()
+                //transfer token
+
+
+                // Create a transfer function message
+                var transfer = new TransferFunction()
+                {
+                    To = recipient,
+                    Value = amountIn
+                };
+
+                // Create a transaction handler for the transfer function
+                var transferHandler = web3.Eth.GetContractTransactionHandler<TransferFunction>();
+
+
+                // Execute the transaction and wait for the receipt
+                var transactionReceipt = await transferHandler.SendRequestAndWaitForReceiptAsync(tokenAddress, transfer);
+
+
+                if(transactionReceipt.Status.Value != 1)
+                {
+                    throw new Exception($"Transaction : {transactionReceipt.TransactionHash} fail , status {transactionReceipt.Status}");
+                }
+
+
+                return transactionReceipt.TransactionHash;
+            }
+            else
+            {
+                //transfer BNB
+
+                // 1) Convert requested amount to Wei
+                BigInteger requestedWei = amountIn;
+
+                // Fetch gas price
+                BigInteger gasPriceWei = await web3.Eth.GasPrice.SendRequestAsync();
+
+                // Estimate gas for this transfer
+                var estimatedGas = await web3.Eth.GetEtherTransferService()
+                                                 .EstimateGasAsync(recipient, amount);
+
+                BigInteger gasLimit = estimatedGas;
+                BigInteger gasCostWei = gasPriceWei * gasLimit;
+
+
+
+
+
+
+                // 3) Subtract gas cost from requested amount
+                BigInteger finalValueWei = requestedWei - gasCostWei;
+
+                // Send BNB directly
+                var txnHash = await web3.Eth.GetEtherTransferService()
+                    .TransferEtherAndWaitForReceiptAsync(recipient, Web3.Convert.FromWei(finalValueWei));
+
+
+				if (txnHash.Status.Value != 1)
 				{
-					To = recipient,
-					Value = amountIn
-				};
+					throw new Exception($"Transaction : {txnHash.TransactionHash} fail , status {txnHash.Status}");
+				}
 
-				// Create a transaction handler for the transfer function
-				var transferHandler = web3.Eth.GetContractTransactionHandler<TransferFunction>();
-
-
-				// Execute the transaction and wait for the receipt
-				var transactionReceipt = await transferHandler.SendRequestAndWaitForReceiptAsync(tokenAddress, transfer);
-
-
-
-
-
-				return transactionReceipt.TransactionHash;
-			}
-            else
-            {
-				//transfer BNB
-
-				// 1) Convert requested amount to Wei
-				BigInteger requestedWei = amountIn;
-
-				// Fetch gas price
-				BigInteger gasPriceWei = await web3.Eth.GasPrice.SendRequestAsync();
-
-				// Estimate gas for this transfer
-				var estimatedGas = await web3.Eth.GetEtherTransferService()
-												 .EstimateGasAsync(recipient, amount);
-
-				BigInteger gasLimit = estimatedGas;
-				BigInteger gasCostWei = gasPriceWei * gasLimit;
-
-
-
-
-
-
-				// 3) Subtract gas cost from requested amount
-				BigInteger finalValueWei = requestedWei - gasCostWei;
-
-				// Send BNB directly
-				var txnHash = await web3.Eth.GetEtherTransferService()
-					.TransferEtherAndWaitForReceiptAsync(recipient, Web3.Convert.FromWei(finalValueWei));
-
-                return txnHash.TransactionHash;
+				return txnHash.TransactionHash;
 			}
 		}
 
@@ -445,7 +458,7 @@ namespace tra.osi
 
 
 		// ======= Minimal Router ABI (only what we call) =======
-		private const string _RouterAbi = @"[{""inputs"":[{""internalType"":""address"",""name"":""_factory"",""type"":""address""},{""internalType"":""address"",""name"":""_WETH"",""type"":""address""}],""stateMutability"":""nonpayable"",""type"":""constructor""},{""inputs"":[],""name"":""WETH"",""outputs"":[{""internalType"":""address"",""name"":"""",""type"":""address""}],""stateMutability"":""view"",""type"":""function""},{""inputs"":[{""internalType"":""address"",""name"":""tokenA"",""type"":""address""},{""internalType"":""address"",""name"":""tokenB"",""type"":""address""},{""internalType"":""uint256"",""name"":""amountADesired"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountBDesired"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountAMin"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountBMin"",""type"":""uint256""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""addLiquidity"",""outputs"":[{""internalType"":""uint256"",""name"":""amountA"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountB"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""liquidity"",""type"":""uint256""}],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""address"",""name"":""token"",""type"":""address""},{""internalType"":""uint256"",""name"":""amountTokenDesired"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountTokenMin"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountETHMin"",""type"":""uint256""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""addLiquidityETH"",""outputs"":[{""internalType"":""uint256"",""name"":""amountToken"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountETH"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""liquidity"",""type"":""uint256""}],""stateMutability"":""payable"",""type"":""function""},{""inputs"":[],""name"":""factory"",""outputs"":[{""internalType"":""address"",""name"":"""",""type"":""address""}],""stateMutability"":""view"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountOut"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""reserveIn"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""reserveOut"",""type"":""uint256""}],""name"":""getAmountIn"",""outputs"":[{""internalType"":""uint256"",""name"":""amountIn"",""type"":""uint256""}],""stateMutability"":""pure"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountIn"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""reserveIn"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""reserveOut"",""type"":""uint256""}],""name"":""getAmountOut"",""outputs"":[{""internalType"":""uint256"",""name"":""amountOut"",""type"":""uint256""}],""stateMutability"":""pure"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountOut"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""}],""name"":""getAmountsIn"",""outputs"":[{""internalType"":""uint256[]"",""name"":""amounts"",""type"":""uint256[]""}],""stateMutability"":""view"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountIn"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""}],""name"":""getAmountsOut"",""outputs"":[{""internalType"":""uint256[]"",""name"":""amounts"",""type"":""uint256[]""}],""stateMutability"":""view"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountA"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""reserveA"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""reserveB"",""type"":""uint256""}],""name"":""quote"",""outputs"":[{""internalType"":""uint256"",""name"":""amountB"",""type"":""uint256""}],""stateMutability"":""pure"",""type"":""function""},{""inputs"":[{""internalType"":""address"",""name"":""tokenA"",""type"":""address""},{""internalType"":""address"",""name"":""tokenB"",""type"":""address""},{""internalType"":""uint256"",""name"":""liquidity"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountAMin"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountBMin"",""type"":""uint256""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""removeLiquidity"",""outputs"":[{""internalType"":""uint256"",""name"":""amountA"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountB"",""type"":""uint256""}],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""address"",""name"":""token"",""type"":""address""},{""internalType"":""uint256"",""name"":""liquidity"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountTokenMin"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountETHMin"",""type"":""uint256""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""removeLiquidityETH"",""outputs"":[{""internalType"":""uint256"",""name"":""amountToken"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountETH"",""type"":""uint256""}],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""address"",""name"":""token"",""type"":""address""},{""internalType"":""uint256"",""name"":""liquidity"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountTokenMin"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountETHMin"",""type"":""uint256""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""removeLiquidityETHSupportingFeeOnTransferTokens"",""outputs"":[{""internalType"":""uint256"",""name"":""amountETH"",""type"":""uint256""}],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""address"",""name"":""token"",""type"":""address""},{""internalType"":""uint256"",""name"":""liquidity"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountTokenMin"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountETHMin"",""type"":""uint256""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""},{""internalType"":""bool"",""name"":""approveMax"",""type"":""bool""},{""internalType"":""uint8"",""name"":""v"",""type"":""uint8""},{""internalType"":""bytes32"",""name"":""r"",""type"":""bytes32""},{""internalType"":""bytes32"",""name"":""s"",""type"":""bytes32""}],""name"":""removeLiquidityETHWithPermit"",""outputs"":[{""internalType"":""uint256"",""name"":""amountToken"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountETH"",""type"":""uint256""}],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""address"",""name"":""token"",""type"":""address""},{""internalType"":""uint256"",""name"":""liquidity"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountTokenMin"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountETHMin"",""type"":""uint256""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""},{""internalType"":""bool"",""name"":""approveMax"",""type"":""bool""},{""internalType"":""uint8"",""name"":""v"",""type"":""uint8""},{""internalType"":""bytes32"",""name"":""r"",""type"":""bytes32""},{""internalType"":""bytes32"",""name"":""s"",""type"":""bytes32""}],""name"":""removeLiquidityETHWithPermitSupportingFeeOnTransferTokens"",""outputs"":[{""internalType"":""uint256"",""name"":""amountETH"",""type"":""uint256""}],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""address"",""name"":""tokenA"",""type"":""address""},{""internalType"":""address"",""name"":""tokenB"",""type"":""address""},{""internalType"":""uint256"",""name"":""liquidity"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountAMin"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountBMin"",""type"":""uint256""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""},{""internalType"":""bool"",""name"":""approveMax"",""type"":""bool""},{""internalType"":""uint8"",""name"":""v"",""type"":""uint8""},{""internalType"":""bytes32"",""name"":""r"",""type"":""bytes32""},{""internalType"":""bytes32"",""name"":""s"",""type"":""bytes32""}],""name"":""removeLiquidityWithPermit"",""outputs"":[{""internalType"":""uint256"",""name"":""amountA"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountB"",""type"":""uint256""}],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountOut"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""swapETHForExactTokens"",""outputs"":[{""internalType"":""uint256[]"",""name"":""amounts"",""type"":""uint256[]""}],""stateMutability"":""payable"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountOutMin"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""swapExactETHForTokens"",""outputs"":[{""internalType"":""uint256[]"",""name"":""amounts"",""type"":""uint256[]""}],""stateMutability"":""payable"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountOutMin"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""swapExactETHForTokensSupportingFeeOnTransferTokens"",""outputs"":[],""stateMutability"":""payable"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountIn"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountOutMin"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""swapExactTokensForETH"",""outputs"":[{""internalType"":""uint256[]"",""name"":""amounts"",""type"":""uint256[]""}],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountIn"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountOutMin"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""swapExactTokensForETHSupportingFeeOnTransferTokens"",""outputs"":[],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountIn"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountOutMin"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""swapExactTokensForTokens"",""outputs"":[{""internalType"":""uint256[]"",""name"":""amounts"",""type"":""uint256[]""}],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountIn"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountOutMin"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""swapExactTokensForTokensSupportingFeeOnTransferTokens"",""outputs"":[],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountOut"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountInMax"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""swapTokensForExactETH"",""outputs"":[{""internalType"":""uint256[]"",""name"":""amounts"",""type"":""uint256[]""}],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountOut"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountInMax"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""swapTokensForExactTokens"",""outputs"":[{""internalType"":""uint256[]"",""name"":""amounts"",""type"":""uint256[]""}],""stateMutability"":""nonpayable"",""type"":""function""},{""stateMutability"":""payable"",""type"":""receive""}]";
+        private const string _RouterAbi = @"[{""inputs"":[{""internalType"":""address"",""name"":""_factory"",""type"":""address""},{""internalType"":""address"",""name"":""_WETH"",""type"":""address""}],""stateMutability"":""nonpayable"",""type"":""constructor""},{""inputs"":[],""name"":""WETH"",""outputs"":[{""internalType"":""address"",""name"":"""",""type"":""address""}],""stateMutability"":""view"",""type"":""function""},{""inputs"":[{""internalType"":""address"",""name"":""tokenA"",""type"":""address""},{""internalType"":""address"",""name"":""tokenB"",""type"":""address""},{""internalType"":""uint256"",""name"":""amountADesired"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountBDesired"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountAMin"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountBMin"",""type"":""uint256""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""addLiquidity"",""outputs"":[{""internalType"":""uint256"",""name"":""amountA"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountB"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""liquidity"",""type"":""uint256""}],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""address"",""name"":""token"",""type"":""address""},{""internalType"":""uint256"",""name"":""amountTokenDesired"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountTokenMin"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountETHMin"",""type"":""uint256""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""addLiquidityETH"",""outputs"":[{""internalType"":""uint256"",""name"":""amountToken"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountETH"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""liquidity"",""type"":""uint256""}],""stateMutability"":""payable"",""type"":""function""},{""inputs"":[],""name"":""factory"",""outputs"":[{""internalType"":""address"",""name"":"""",""type"":""address""}],""stateMutability"":""view"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountOut"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""reserveIn"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""reserveOut"",""type"":""uint256""}],""name"":""getAmountIn"",""outputs"":[{""internalType"":""uint256"",""name"":""amountIn"",""type"":""uint256""}],""stateMutability"":""pure"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountIn"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""reserveIn"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""reserveOut"",""type"":""uint256""}],""name"":""getAmountOut"",""outputs"":[{""internalType"":""uint256"",""name"":""amountOut"",""type"":""uint256""}],""stateMutability"":""pure"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountOut"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""}],""name"":""getAmountsIn"",""outputs"":[{""internalType"":""uint256[]"",""name"":""amounts"",""type"":""uint256[]""}],""stateMutability"":""view"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountIn"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""}],""name"":""getAmountsOut"",""outputs"":[{""internalType"":""uint256[]"",""name"":""amounts"",""type"":""uint256[]""}],""stateMutability"":""view"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountA"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""reserveA"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""reserveB"",""type"":""uint256""}],""name"":""quote"",""outputs"":[{""internalType"":""uint256"",""name"":""amountB"",""type"":""uint256""}],""stateMutability"":""pure"",""type"":""function""},{""inputs"":[{""internalType"":""address"",""name"":""tokenA"",""type"":""address""},{""internalType"":""address"",""name"":""tokenB"",""type"":""address""},{""internalType"":""uint256"",""name"":""liquidity"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountAMin"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountBMin"",""type"":""uint256""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""removeLiquidity"",""outputs"":[{""internalType"":""uint256"",""name"":""amountA"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountB"",""type"":""uint256""}],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""address"",""name"":""token"",""type"":""address""},{""internalType"":""uint256"",""name"":""liquidity"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountTokenMin"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountETHMin"",""type"":""uint256""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""removeLiquidityETH"",""outputs"":[{""internalType"":""uint256"",""name"":""amountToken"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountETH"",""type"":""uint256""}],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""address"",""name"":""token"",""type"":""address""},{""internalType"":""uint256"",""name"":""liquidity"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountTokenMin"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountETHMin"",""type"":""uint256""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""removeLiquidityETHSupportingFeeOnTransferTokens"",""outputs"":[{""internalType"":""uint256"",""name"":""amountETH"",""type"":""uint256""}],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""address"",""name"":""token"",""type"":""address""},{""internalType"":""uint256"",""name"":""liquidity"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountTokenMin"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountETHMin"",""type"":""uint256""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""},{""internalType"":""bool"",""name"":""approveMax"",""type"":""bool""},{""internalType"":""uint8"",""name"":""v"",""type"":""uint8""},{""internalType"":""bytes32"",""name"":""r"",""type"":""bytes32""},{""internalType"":""bytes32"",""name"":""s"",""type"":""bytes32""}],""name"":""removeLiquidityETHWithPermit"",""outputs"":[{""internalType"":""uint256"",""name"":""amountToken"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountETH"",""type"":""uint256""}],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""address"",""name"":""token"",""type"":""address""},{""internalType"":""uint256"",""name"":""liquidity"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountTokenMin"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountETHMin"",""type"":""uint256""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""},{""internalType"":""bool"",""name"":""approveMax"",""type"":""bool""},{""internalType"":""uint8"",""name"":""v"",""type"":""uint8""},{""internalType"":""bytes32"",""name"":""r"",""type"":""bytes32""},{""internalType"":""bytes32"",""name"":""s"",""type"":""bytes32""}],""name"":""removeLiquidityETHWithPermitSupportingFeeOnTransferTokens"",""outputs"":[{""internalType"":""uint256"",""name"":""amountETH"",""type"":""uint256""}],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""address"",""name"":""tokenA"",""type"":""address""},{""internalType"":""address"",""name"":""tokenB"",""type"":""address""},{""internalType"":""uint256"",""name"":""liquidity"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountAMin"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountBMin"",""type"":""uint256""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""},{""internalType"":""bool"",""name"":""approveMax"",""type"":""bool""},{""internalType"":""uint8"",""name"":""v"",""type"":""uint8""},{""internalType"":""bytes32"",""name"":""r"",""type"":""bytes32""},{""internalType"":""bytes32"",""name"":""s"",""type"":""bytes32""}],""name"":""removeLiquidityWithPermit"",""outputs"":[{""internalType"":""uint256"",""name"":""amountA"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountB"",""type"":""uint256""}],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountOut"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""swapETHForExactTokens"",""outputs"":[{""internalType"":""uint256[]"",""name"":""amounts"",""type"":""uint256[]""}],""stateMutability"":""payable"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountOutMin"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""swapExactETHForTokens"",""outputs"":[{""internalType"":""uint256[]"",""name"":""amounts"",""type"":""uint256[]""}],""stateMutability"":""payable"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountOutMin"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""swapExactETHForTokensSupportingFeeOnTransferTokens"",""outputs"":[],""stateMutability"":""payable"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountIn"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountOutMin"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""swapExactTokensForETH"",""outputs"":[{""internalType"":""uint256[]"",""name"":""amounts"",""type"":""uint256[]""}],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountIn"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountOutMin"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""swapExactTokensForETHSupportingFeeOnTransferTokens"",""outputs"":[],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountIn"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountOutMin"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""swapExactTokensForTokens"",""outputs"":[{""internalType"":""uint256[]"",""name"":""amounts"",""type"":""uint256[]""}],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountIn"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountOutMin"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""swapExactTokensForTokensSupportingFeeOnTransferTokens"",""outputs"":[],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountOut"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountInMax"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""swapTokensForExactETH"",""outputs"":[{""internalType"":""uint256[]"",""name"":""amounts"",""type"":""uint256[]""}],""stateMutability"":""nonpayable"",""type"":""function""},{""inputs"":[{""internalType"":""uint256"",""name"":""amountOut"",""type"":""uint256""},{""internalType"":""uint256"",""name"":""amountInMax"",""type"":""uint256""},{""internalType"":""address[]"",""name"":""path"",""type"":""address[]""},{""internalType"":""address"",""name"":""to"",""type"":""address""},{""internalType"":""uint256"",""name"":""deadline"",""type"":""uint256""}],""name"":""swapTokensForExactTokens"",""outputs"":[{""internalType"":""uint256[]"",""name"":""amounts"",""type"":""uint256[]""}],""stateMutability"":""nonpayable"",""type"":""function""},{""stateMutability"":""payable"",""type"":""receive""}]";
         private const string _WbnbAbi = @"[{""constant"":true,""inputs"":[],""name"":""name"",""outputs"":[{""name"":"""",""type"":""string""}],""payable"":false,""stateMutability"":""view"",""type"":""function""},{""constant"":false,""inputs"":[{""name"":""guy"",""type"":""address""},{""name"":""wad"",""type"":""uint256""}],""name"":""approve"",""outputs"":[{""name"":"""",""type"":""bool""}],""payable"":false,""stateMutability"":""nonpayable"",""type"":""function""},{""constant"":true,""inputs"":[],""name"":""totalSupply"",""outputs"":[{""name"":"""",""type"":""uint256""}],""payable"":false,""stateMutability"":""view"",""type"":""function""},{""constant"":false,""inputs"":[{""name"":""src"",""type"":""address""},{""name"":""dst"",""type"":""address""},{""name"":""wad"",""type"":""uint256""}],""name"":""transferFrom"",""outputs"":[{""name"":"""",""type"":""bool""}],""payable"":false,""stateMutability"":""nonpayable"",""type"":""function""},{""constant"":false,""inputs"":[{""name"":""wad"",""type"":""uint256""}],""name"":""withdraw"",""outputs"":[],""payable"":false,""stateMutability"":""nonpayable"",""type"":""function""},{""constant"":true,""inputs"":[],""name"":""decimals"",""outputs"":[{""name"":"""",""type"":""uint8""}],""payable"":false,""stateMutability"":""view"",""type"":""function""},{""constant"":true,""inputs"":[{""name"":"""",""type"":""address""}],""name"":""balanceOf"",""outputs"":[{""name"":"""",""type"":""uint256""}],""payable"":false,""stateMutability"":""view"",""type"":""function""},{""constant"":true,""inputs"":[],""name"":""symbol"",""outputs"":[{""name"":"""",""type"":""string""}],""payable"":false,""stateMutability"":""view"",""type"":""function""},{""constant"":false,""inputs"":[{""name"":""dst"",""type"":""address""},{""name"":""wad"",""type"":""uint256""}],""name"":""transfer"",""outputs"":[{""name"":"""",""type"":""bool""}],""payable"":false,""stateMutability"":""nonpayable"",""type"":""function""},{""constant"":false,""inputs"":[],""name"":""deposit"",""outputs"":[],""payable"":true,""stateMutability"":""payable"",""type"":""function""},{""constant"":true,""inputs"":[{""name"":"""",""type"":""address""},{""name"":"""",""type"":""address""}],""name"":""allowance"",""outputs"":[{""name"":"""",""type"":""uint256""}],""payable"":false,""stateMutability"":""view"",""type"":""function""},{""payable"":true,""stateMutability"":""payable"",""type"":""fallback""},{""anonymous"":false,""inputs"":[{""indexed"":true,""name"":""src"",""type"":""address""},{""indexed"":true,""name"":""guy"",""type"":""address""},{""indexed"":false,""name"":""wad"",""type"":""uint256""}],""name"":""Approval"",""type"":""event""},{""anonymous"":false,""inputs"":[{""indexed"":true,""name"":""src"",""type"":""address""},{""indexed"":true,""name"":""dst"",""type"":""address""},{""indexed"":false,""name"":""wad"",""type"":""uint256""}],""name"":""Transfer"",""type"":""event""},{""anonymous"":false,""inputs"":[{""indexed"":true,""name"":""dst"",""type"":""address""},{""indexed"":false,""name"":""wad"",""type"":""uint256""}],""name"":""Deposit"",""type"":""event""},{""anonymous"":false,""inputs"":[{""indexed"":true,""name"":""src"",""type"":""address""},{""indexed"":false,""name"":""wad"",""type"":""uint256""}],""name"":""Withdrawal"",""type"":""event""}]";
     }
 }
